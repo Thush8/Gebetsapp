@@ -4,16 +4,24 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -23,22 +31,51 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.gebetsapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
+import static java.lang.Thread.sleep;
 
 public class HomeFragment extends Fragment {
 
-
-    private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
-    private FusedLocationProviderClient fusedLocationClient;
+    private static final int PERMISSIONS_FINE_LOCATION = 99;
     private TextView user_location, datetime;
     private TextView[] time;
     private double latitude = 0, longitude = 0;
 
+    //Googles API for location services
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    LocationRequest locationRequest;
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case PERMISSIONS_FINE_LOCATION:
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    updateGPS();
+                } else {
+                    Toast.makeText(getContext(), "This app requires the permission to be granted to work properly",Toast.LENGTH_SHORT).show();
+                }
+        }
+    }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -53,19 +90,69 @@ public class HomeFragment extends Fragment {
         time[4] = root.findViewById(R.id.TextViewTime5);
         time[5] = root.findViewById(R.id.TextViewTime6);
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
-        user_location.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(1000*300);
+        locationRequest.setFastestInterval(1000*5);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-                if(fetchLocation()) {
-                    fetchTimes();
+        updateGPS();
+
+        SwipeRefreshLayout mySwipeRefreshLayout = root.findViewById(R.id.swiperefresh);
+        mySwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Log.i("LOG_TAG", "onRefresh called from SwipeRefreshLayout");
+
+                        // This method performs the actual data-refresh operation.
+                        // The method calls setRefreshing(false) when it's finished.
+                        updateGPS();
+                    }
                 }
-            }
-        });
+        );
 
         return root;
     }
+
+    private void updateGPS() {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        if(ActivityCompat.checkSelfPermission(getContext(),Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED){
+            // user provided the permission
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    // we got permissions. Put the values of location. XXX into the UI components.
+                    System.out.println("Got Location");
+                    updateUIValues(location);
+                    if (fetchLocation()) {
+                        fetchTimes();
+                    }
+                }
+            });
+        } else {
+            // permissions not granted
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_FINE_LOCATION);
+            }
+        }
+    }
+
+    private void updateUIValues(@NotNull Location location) {
+        try {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Latitude: " + latitude);
+        System.out.println("Longitude: " + longitude);
+    }
+
+
+    public boolean fetchLocation() {
+        return latitude + longitude != 0;
+    }
+
 
     private void fetchTimes(){
         RequestQueue queue = Volley.newRequestQueue(getContext());
@@ -75,8 +162,8 @@ public class HomeFragment extends Fragment {
         String year = currentDate.substring(6);
         datetime.setText(currentDate + " " + currentTime);
         //Koordinaten Essen Altendorf
-        latitude = 51.458184;
-        longitude = 6.998448;
+        //latitude = 51.458184;
+        //longitude = 6.998448;
         //month = 4, year = 2017;
         String url = "https://api.aladhan.com/v1/calendar?latitude="+ latitude +"&longitude="+ longitude +
                 "&method=2&month="+ month +"&year="+ year +""+"/";
@@ -119,68 +206,6 @@ public class HomeFragment extends Fragment {
         queue.add(stringRequest);
     }
 
-    private boolean fetchLocation(){
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if(shouldShowRequestPermissionRationale("Manifest.permission.ACCESS_COARSE_LOCATION")){
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Required Location Permission")
-                        .setMessage("You have to give this permission to acess this feature")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                ActivityCompat.requestPermissions(getActivity(),
-                                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        })
-                        .create()
-                        .show();
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        } else {
-            fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                // Logic to handle location object
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                                System.out.println("Got Location");
-                                user_location.setText("Latitude = "+latitude + "\nLongitude = " + longitude);
-                            }
-                        }
-                    });
-            return latitude + longitude != 0;
-        }
-        return false;
-    }
-
-
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION){
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                //abc
-            }else{
-
-            }
-        }
-    }
 
 
 }
