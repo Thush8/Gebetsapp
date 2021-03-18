@@ -1,11 +1,12 @@
 <resources>
-    <string name="app_name">GebetsApp</string>
+    <string name="app_name">Adhān</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">GebetsApp</string>
+    <string name="nav_header_title">Adhān</string>
     <string name="nav_header_subtitle">Company</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_themeon">Light Mode</string>
+    <string name="action_themeoff">Dark Mode</string>
 
     <string name="menu_home">Prayer Times</string>
     <string name="home_first_time">Fajr</string>

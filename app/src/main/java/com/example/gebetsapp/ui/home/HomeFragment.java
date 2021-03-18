@@ -61,6 +61,7 @@ public class HomeFragment extends Fragment {
     //Googles API for location services
     private FusedLocationProviderClient fusedLocationProviderClient;
     LocationRequest locationRequest;
+    SwipeRefreshLayout mySwipeRefreshLayout;
 
 
     @Override
@@ -90,14 +91,7 @@ public class HomeFragment extends Fragment {
         time[4] = root.findViewById(R.id.TextViewTime5);
         time[5] = root.findViewById(R.id.TextViewTime6);
 
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000*300);
-        locationRequest.setFastestInterval(1000*5);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        updateGPS();
-
-        SwipeRefreshLayout mySwipeRefreshLayout = root.findViewById(R.id.swiperefresh);
+        mySwipeRefreshLayout = root.findViewById(R.id.swiperefresh);
         mySwipeRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -111,10 +105,18 @@ public class HomeFragment extends Fragment {
                 }
         );
 
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(1000*300);
+        locationRequest.setFastestInterval(1000*5);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        updateGPS();
+
         return root;
     }
 
     private void updateGPS() {
+        mySwipeRefreshLayout.setRefreshing(true);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
         if(ActivityCompat.checkSelfPermission(getContext(),Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED){
             // user provided the permission
@@ -126,6 +128,7 @@ public class HomeFragment extends Fragment {
                     updateUIValues(location);
                     if (fetchLocation()) {
                         fetchTimes();
+                        mySwipeRefreshLayout.setRefreshing(false);
                     }
                 }
             });
@@ -150,6 +153,19 @@ public class HomeFragment extends Fragment {
 
 
     public boolean fetchLocation() {
+
+            Geocoder coder = new Geocoder(getContext());
+            List<Address> address;
+            try {
+                address = coder.getFromLocation(latitude, longitude, 1);
+                if (address == null) {
+                    return false;
+                }
+                Address street = address.get(0);
+                user_location.setText(street.getLocality());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         return latitude + longitude != 0;
     }
 
