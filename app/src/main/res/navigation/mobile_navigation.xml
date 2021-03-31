@@ -7,19 +7,19 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.gebetsapp.ui.home.HomeFragment"
+        android:name="com.example.gebetsapp.ui.Adhan.HomeFragment"
         android:label="@string/menu_home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.example.gebetsapp.ui.gallery.GalleryFragment"
-        android:label="@string/menu_temp1"
-        tools:layout="@layout/fragment_temp1" />
+        android:id="@+id/nav_quibla"
+        android:name="com.example.gebetsapp.ui.Quibla.QuiblaFragment"
+        android:label="@string/menu_quibla"
+        tools:layout="@layout/fragment_quibla" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.gebetsapp.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_temp2"
-        tools:layout="@layout/fragment_temp2" />
+        android:id="@+id/nav_quran"
+        android:name="com.example.gebetsapp.ui.Quran.QuranFragment"
+        android:label="@string/menu_quran"
+        tools:layout="@layout/fragment_quran" />
 </navigation>

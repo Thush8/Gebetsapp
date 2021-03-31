@@ -1,25 +1,27 @@
-package com.example.gebetsapp.ui.home;
+package com.example.gebetsapp.ui.Adhan;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.app.DatePickerDialog;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -31,19 +33,14 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.gebetsapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -54,9 +51,23 @@ import static java.lang.Thread.sleep;
 public class HomeFragment extends Fragment {
 
     private static final int PERMISSIONS_FINE_LOCATION = 99;
-    private TextView user_location, datetime;
+    private String USER_LOCATION;
+    private String DATETIME;
+    private String TIME0, TIME1;
+    private String TIME2;
+    private String TIME3;
+    private String TIME4;
+    private String TIME5;
+    private TextView user_location;
+    private TextView datetime;
     private TextView[] time;
-    private double latitude = 0, longitude = 0;
+    private double latitude = 0;
+    private double longitude = 0;
+    private Button datepick;
+    private Button placepick;
+    private boolean customdate = false;
+    private String currentDate = "00-00-0000", currentTime = "00:00:00", month="0", year="0";
+    private DatePickerDialog.OnDateSetListener mDateSetListener;
 
     //Googles API for location services
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -79,7 +90,7 @@ public class HomeFragment extends Fragment {
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+                             ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         user_location = root.findViewById(R.id.user_location);
         datetime = root.findViewById(R.id.date);
@@ -90,6 +101,20 @@ public class HomeFragment extends Fragment {
         time[3] = root.findViewById(R.id.TextViewTime4);
         time[4] = root.findViewById(R.id.TextViewTime5);
         time[5] = root.findViewById(R.id.TextViewTime6);
+
+        if (savedInstanceState != null) {
+            user_location.setText(savedInstanceState.getString(USER_LOCATION, "No Position found"));
+            datetime.setText(savedInstanceState.getString(DATETIME, "--/--/----"));
+            time[0].setText(savedInstanceState.getString(TIME0, "--:--"));
+            time[1].setText(savedInstanceState.getString(TIME1, "--:--"));
+            time[2].setText(savedInstanceState.getString(TIME2, "--:--"));
+            time[3].setText(savedInstanceState.getString(TIME3, "--:--"));
+            time[4].setText(savedInstanceState.getString(TIME4, "--:--"));
+            time[5].setText(savedInstanceState.getString(TIME5, "--:--"));
+
+        } else {
+
+        }
 
         mySwipeRefreshLayout = root.findViewById(R.id.swiperefresh);
         mySwipeRefreshLayout.setOnRefreshListener(
@@ -110,7 +135,42 @@ public class HomeFragment extends Fragment {
         locationRequest.setFastestInterval(1000*5);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        updateGPS();
+        if(time[1].getText().toString().equals("00:00") ) {
+            updateGPS();
+        }
+
+        datepick = root.findViewById(R.id.datepick);
+        placepick = root.findViewById(R.id.placepick);
+
+        datepick.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar cal = Calendar.getInstance();
+                int year = cal.get(Calendar.YEAR);
+                int month = cal.get(Calendar.MONTH);
+                int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog dialog = new DatePickerDialog(
+                        getActivity(),
+                        android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                        mDateSetListener,
+                        year, month, day);
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                dialog.show();
+            }
+        });
+
+        mDateSetListener = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+                datetime.setText(currentDate);
+                DATETIME = currentDate;
+                customdate = true;
+                updateGPS();
+            }
+        };
+
 
         return root;
     }
@@ -125,7 +185,7 @@ public class HomeFragment extends Fragment {
                 public void onSuccess(Location location) {
                     // we got permissions. Put the values of location. XXX into the UI components.
                     System.out.println("Got Location");
-                    updateUIValues(location);
+                    updatePositionValues(location);
                     if (fetchLocation()) {
                         fetchTimes();
                         mySwipeRefreshLayout.setRefreshing(false);
@@ -140,7 +200,16 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void updateUIValues(@NotNull Location location) {
+    private void updateDateValues(){
+        currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+        currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+        month = currentDate.substring(3,5);
+        year = currentDate.substring(6);
+        datetime.setText(currentDate + " " + currentTime);
+        DATETIME = currentDate + " " + currentTime;
+    }
+
+    private void updatePositionValues(@NotNull Location location) {
         try {
             latitude = location.getLatitude();
             longitude = location.getLongitude();
@@ -162,6 +231,7 @@ public class HomeFragment extends Fragment {
                     return false;
                 }
                 Address street = address.get(0);
+                USER_LOCATION = street.getLocality();
                 user_location.setText(street.getLocality());
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -171,12 +241,16 @@ public class HomeFragment extends Fragment {
 
 
     private void fetchTimes(){
+        if(!customdate) {
+            updateDateValues();
+        } else {
+            currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+            month = DATETIME.substring(3,5);
+            year = DATETIME.substring(6,10);
+        }
+        datetime.setText(DATETIME.substring(0,10) + " " + currentTime);
+
         RequestQueue queue = Volley.newRequestQueue(getContext());
-        String currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
-        String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
-        String month = currentDate.substring(3,5);
-        String year = currentDate.substring(6);
-        datetime.setText(currentDate + " " + currentTime);
         //Koordinaten Essen Altendorf
         //latitude = 51.458184;
         //longitude = 6.998448;
@@ -199,16 +273,17 @@ public class HomeFragment extends Fragment {
                         int time5 = response.lastIndexOf("Isha",day) + 7;
 
                         time[0].setText(response.substring(time0,time0 + 5));
-
+                        TIME0 = response.substring(time0, time0 + 5);
                         time[1].setText(response.substring(time1,time1 + 5));
-
+                        TIME1 = response.substring(time1, time1 + 5);
                         time[2].setText(response.substring(time2,time2 + 5));
-
+                        TIME2 = response.substring(time2, time2 + 5);
                         time[3].setText(response.substring(time3,time3 + 5));
-
+                        TIME3 = response.substring(time3, time3 + 5);
                         time[4].setText(response.substring(time4,time4 + 5));
-
+                        TIME4 = response.substring(time4, time4 + 5);
                         time[5].setText(response.substring(time5,time5 + 5));
+                        TIME5 = response.substring(time5, time5 + 5);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -222,6 +297,18 @@ public class HomeFragment extends Fragment {
         queue.add(stringRequest);
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState){
+        outState.putString(USER_LOCATION, user_location.getText().toString());
+        outState.putString(DATETIME, datetime.getText().toString());
+        outState.putString(TIME0, time[0].getText().toString());
+        outState.putString(TIME1, time[1].getText().toString());
+        outState.putString(TIME2, time[2].getText().toString());
+        outState.putString(TIME3, time[3].getText().toString());
+        outState.putString(TIME4, time[4].getText().toString());
+        outState.putString(TIME5, time[5].getText().toString());
 
+        super.onSaveInstanceState(outState);
+    }
 
 }

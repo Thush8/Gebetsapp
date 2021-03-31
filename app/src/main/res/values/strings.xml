@@ -26,6 +26,10 @@
     <string name="city">Position not found</string>
     <string name="date">00/00/0000</string>
 
-    <string name="menu_temp1">Temp1</string>
-    <string name="menu_temp2">Temp2</string>
+    <string name="menu_quibla">Quibla</string>
+    <string name="menu_quran">Quran</string>
+    <string name="pick_date">Pick date </string>
+    <string name="pick_place">Pick place</string>
+
+
 </resources>
