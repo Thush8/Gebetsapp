@@ -141,6 +141,7 @@ public class HomeFragment extends Fragment {
 
         datepick = root.findViewById(R.id.datepick);
         placepick = root.findViewById(R.id.placepick);
+        //TODO add placepicker
 
         datepick.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,6 +158,7 @@ public class HomeFragment extends Fragment {
                         year, month, day);
                 dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 dialog.show();
+                //TODO fix Datepicker
             }
         });
 
@@ -170,6 +172,7 @@ public class HomeFragment extends Fragment {
                 updateGPS();
             }
         };
+        //TODO save last result
 
 
         return root;

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- A 'parent' preference, which enables/disables child preferences (below)
+         when checked/unchecked. -->
+    <PreferenceCategory
+        android:title="Notification settings"
+        android:key="notifications"
+        android:summary="Select the you want to get notified">
+
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_firsttime"
+            android:title="@string/home_first_time" />
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_secondtime"
+            android:title="@string/home_second_time" />
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_thirdtime"
+            android:title="@string/home_third_time" />
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_fourthtime"
+            android:title="@string/home_fourth_time" />
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_fifthtime"
+            android:title="@string/home_fifth_time" />
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="notifications_sixthtime"
+            android:title="@string/home_sixth_time" />
+        <RingtonePreference
+            android:defaultValue="true"
+            android:key="ringtone_preference"
+            android:title="Notification Ringtone"
+            android:summary="Customise Notification Ringtone for you"
+            android:dialogTitle="Notification Ringtone"
+            android:dialogMessage="Customise Notification Ringtone for you"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

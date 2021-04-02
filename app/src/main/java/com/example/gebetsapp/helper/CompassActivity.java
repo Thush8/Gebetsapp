@@ -27,6 +27,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.gebetsapp.MainActivity;
 import com.example.gebetsapp.R;
 import com.hassanjamil.hqibla.Compass;
 import com.hassanjamil.hqibla.Constants;
@@ -37,8 +38,8 @@ import java.util.Locale;
 import static android.view.View.INVISIBLE;
 
 
-public class CompassFragment extends AppCompatActivity {
-    private static final String TAG = CompassFragment.class.getSimpleName();
+public class CompassActivity extends AppCompatActivity {
+    private static final String TAG = CompassActivity.class.getSimpleName();
     private Compass compass;
     private ImageView qiblatIndicator;
     private ImageView imageDial;
@@ -64,6 +65,8 @@ public class CompassFragment extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finish();
+                Intent intent = new Intent(CompassActivity.this, MainActivity.class);
+                startActivity(intent);
             }
         });
         /////////////////////////////////////////////////

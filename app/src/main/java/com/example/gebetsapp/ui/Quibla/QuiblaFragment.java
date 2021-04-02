@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.example.gebetsapp.R;
-import com.example.gebetsapp.helper.CompassFragment;
+import com.example.gebetsapp.helper.CompassActivity;
 import com.hassanjamil.hqibla.Constants;
 
 public class QuiblaFragment extends Fragment {
@@ -23,7 +23,7 @@ public class QuiblaFragment extends Fragment {
 
         super.onCreate(savedInstanceState);
 
-        Intent intent = new Intent(getActivity(), CompassFragment.class);
+        Intent intent = new Intent(getActivity(), CompassActivity.class);
         intent.putExtra(Constants.TOOLBAR_TITLE, "Quibla");		// Toolbar Title
         intent.putExtra(Constants.TOOLBAR_BG_COLOR, "#FF4AA02C");		// Toolbar Background color
         intent.putExtra(Constants.TOOLBAR_TITLE_COLOR, "#FF000000");	// Toolbar Title color
